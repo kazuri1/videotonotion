@@ -98,12 +98,24 @@ async function transcribeVideo(url) {
 
   // 3. Extract audio using ffmpeg
   console.log('Extracting audio...');
+  
+  // First, let's inspect with ffprobe
+  await new Promise((resolve) => {
+    exec(`"${FFPROBE_PATH}" -v error -show_entries stream=codec_type -of default=noprint_wrappers=1 "${videoPath}"`, (error, stdout) => {
+      console.log('Media streams found:', stdout || 'none');
+      resolve();
+    });
+  });
+
   await new Promise((resolve, reject) => {
-    ffmpeg(videoPath)
-      .toFormat('mp3')
-      .on('end', resolve)
-      .on('error', reject)
-      .save(audioPath);
+    // Using exec instead of fluent-ffmpeg for more control and better error output
+    exec(`"${FFMPEG_PATH}" -y -i "${videoPath}" -vn -acodec libmp3lame -q:a 2 "${audioPath}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('ffmpeg stderr:', stderr);
+        return reject(new Error(`ffmpeg failed: ${stderr || error.message}`));
+      }
+      resolve();
+    });
   });
 
   // 4. Transcribe using Groq Whisper
