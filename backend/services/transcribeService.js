@@ -33,6 +33,7 @@ async function transcribeVideo(url) {
   // 1. Download video using yt-dlp
   console.log('Downloading video...');
   const ffmpegDir = path.dirname(FFMPEG_PATH);
+  const cookiesPath = path.join(videoDir, 'cookies.txt');
   
   await new Promise((resolve, reject) => {
     const env = { 
@@ -40,9 +41,21 @@ async function transcribeVideo(url) {
       PATH: `${ffmpegDir}${path.delimiter}${process.env.PATH}` 
     };
 
+    // Handle cookies if provided in ENV
+    let cookieArg = '';
+    if (process.env.COOKIES_TEXT) {
+      fs.writeFileSync(cookiesPath, process.env.COOKIES_TEXT);
+      cookieArg = `--cookies "${cookiesPath}"`;
+    }
+
     // Use output template to let yt-dlp decide extension
     // We increase duration filter to 300s
-    exec(`"${YT_DLP_PATH}" --ffmpeg-location "${FFMPEG_PATH}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${videoTemplate}" "${url}"`, { env }, (error, stdout, stderr) => {
+    exec(`"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${FFMPEG_PATH}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${videoTemplate}" "${url}"`, { env }, (error, stdout, stderr) => {
+      // Cleanup cookies file immediately after execution
+      if (fs.existsSync(cookiesPath)) {
+        try { fs.unlinkSync(cookiesPath); } catch(e) {}
+      }
+
       if (error) {
         console.error('yt-dlp error:', error);
         return reject(new Error(`yt-dlp failed: ${stderr || error.message}`));
