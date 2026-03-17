@@ -83,11 +83,18 @@ async function transcribeVideo(url) {
   const videoFileName = files.find(f => f.startsWith(videoBaseName) && !f.endsWith('.mp3'));
   
   if (!videoFileName) {
-    throw new Error(`Video download failed: No file starting with ${videoBaseName} found in ${videoDir}.`);
+    console.error('Files in directory:', files);
+    throw new Error(`Video download failed: No file starting with ${videoBaseName} found in ${videoDir}. Checked files: ${files.join(', ')}`);
   }
   
   const videoPath = path.join(videoDir, videoFileName);
+  const stats = fs.statSync(videoPath);
   console.log('Found video file at:', videoPath);
+  console.log('Video file size:', stats.size, 'bytes');
+
+  if (stats.size === 0) {
+    throw new Error(`Video download failed: Found file ${videoFileName} but it is 0 bytes. Check cookies or URL.`);
+  }
 
   // 3. Extract audio using ffmpeg
   console.log('Extracting audio...');
