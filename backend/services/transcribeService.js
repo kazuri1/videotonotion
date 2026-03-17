@@ -57,9 +57,9 @@ async function transcribeVideo(url) {
     }
 
     // We use --extract-audio and --audio-format mp3 to get an mp3 directly
-    // Pointing --ffmpeg-location to the directory so it finds both ffmpeg and ffprobe
-    const toolDir = path.dirname(FFMPEG_PATH);
-    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${toolDir}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "bestaudio/best" --extract-audio --audio-format mp3 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioPath}" "${url}"`;
+    // Pointing --ffmpeg-location to the ABSOLUTE directory so it finds both ffmpeg and ffprobe
+    const toolDir = path.resolve(path.dirname(FFMPEG_PATH));
+    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${toolDir}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "ba/b" --extract-audio --audio-format mp3 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioPath}" "${url}"`;
     
     exec(command, { env }, (error, stdout, stderr) => {
       if (fs.existsSync(cookiesPath)) {
@@ -103,11 +103,13 @@ async function transcribeVideo(url) {
 
   // Cleanup
   try {
-    if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
     if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
-    // Also cleanup any other temp_video files just in case
+    // Also cleanup any other temp files in the root just in case
+    const files = fs.readdirSync(videoDir);
     files.forEach(f => {
-      if (f.startsWith(videoBaseName) && f !== videoFileName && !f.endsWith('.mp3')) {
+      if ((f.startsWith('temp_video') || f.startsWith('temp_audio')) && f.endsWith('.mp3')) {
+        // We only delete them if they aren't the one we just processed (though we just deleted it)
+      } else if (f.startsWith('temp_video')) {
         try { fs.unlinkSync(path.join(videoDir, f)); } catch(e) {}
       }
     });
