@@ -59,7 +59,10 @@ async function transcribeVideo(url) {
     // We use --extract-audio and --audio-format mp3 to get an mp3 directly
     // Pointing --ffmpeg-location to the ABSOLUTE directory so it finds both ffmpeg and ffprobe
     const toolDir = path.resolve(path.dirname(FFMPEG_PATH));
-    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${toolDir}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "ba/b" --extract-audio --audio-format mp3 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioPath}" "${url}"`;
+    const referer = url.includes('instagram.com') ? 'https://www.instagram.com/' : 'https://www.youtube.com/';
+    const format = 'bestaudio/best';
+    
+    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${toolDir}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "${referer}" -f "${format}" --extract-audio --audio-format mp3 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioPath}" "${url}"`;
     
     exec(command, { env }, (error, stdout, stderr) => {
       if (fs.existsSync(cookiesPath)) {
