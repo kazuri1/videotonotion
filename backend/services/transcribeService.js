@@ -42,7 +42,7 @@ async function transcribeVideo(url) {
 
     // Use output template to let yt-dlp decide extension
     // We increase duration filter to 300s
-    exec(`"${YT_DLP_PATH}" --ffmpeg-location "${FFMPEG_PATH}" -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${videoTemplate}" "${url}"`, { env }, (error, stdout, stderr) => {
+    exec(`"${YT_DLP_PATH}" --ffmpeg-location "${FFMPEG_PATH}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${videoTemplate}" "${url}"`, { env }, (error, stdout, stderr) => {
       if (error) {
         console.error('yt-dlp error:', error);
         return reject(new Error(`yt-dlp failed: ${stderr || error.message}`));
