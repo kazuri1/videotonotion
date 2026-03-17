@@ -5,8 +5,8 @@ const Groq = require('groq-sdk');
 const ffmpeg = require('fluent-ffmpeg');
 require('dotenv').config();
 
-const YT_DLP_PATH = process.env.YT_DLP_PATH || 'yt-dlp';
-const FFMPEG_PATH = process.env.FFMPEG_PATH || 'ffmpeg';
+const YT_DLP_PATH = process.env.YT_DLP_PATH || path.join(__dirname, '../yt-dlp');
+const FFMPEG_PATH = process.env.FFMPEG_PATH || path.join(__dirname, '../ffmpeg');
 
 ffmpeg.setFfmpegPath(FFMPEG_PATH);
 
