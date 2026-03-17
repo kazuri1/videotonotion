@@ -1,0 +1,18 @@
+# Node
+node_modules/
+dist/
+build/
+.env
+.DS_Store
+
+# Temporary files
+temp_video*
+temp_audio*
+*.mp4
+*.mp3
+*.webm
+
+# Vercel/IDE
+.vercel
+.vscode/
+.idea/
