@@ -27,7 +27,7 @@ function App() {
       setTranscript(response.data.text);
       setStep('');
     } catch (err: any) {
-      const errorMsg = err.response?.data?.error || (err.request ? 'Network Error: Cannot connect to backend.' : 'An unexpected error occurred.');
+      const errorMsg = err.response?.data?.error || (err.request ? `Network Error: Cannot connect to backend at ${API_BASE_URL}.` : 'An unexpected error occurred.');
       setError(`${errorMsg} Please ensure the URL is valid and the video is under 5 minutes.`);
       console.error('API Error:', err);
     } finally {
