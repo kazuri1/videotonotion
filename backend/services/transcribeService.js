@@ -15,6 +15,7 @@ console.log('YT_DLP_PATH:', YT_DLP_PATH);
 console.log('FFMPEG_PATH:', FFMPEG_PATH);
 console.log('YT_DLP_EXISTS:', fs.existsSync(YT_DLP_PATH));
 console.log('FFMPEG_EXISTS:', fs.existsSync(FFMPEG_PATH));
+console.log('FFPROBE_EXISTS:', fs.existsSync(FFPROBE_PATH));
 console.log('----------------------');
 
 ffmpeg.setFfmpegPath(FFMPEG_PATH);
@@ -56,8 +57,9 @@ async function transcribeVideo(url) {
     }
 
     // We use --extract-audio and --audio-format mp3 to get an mp3 directly
-    // This is MUCH faster and more reliable as it skips the video download
-    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${FFMPEG_PATH}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "bestaudio/best" --extract-audio --audio-format mp3 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioPath}" "${url}"`;
+    // Pointing --ffmpeg-location to the directory so it finds both ffmpeg and ffprobe
+    const toolDir = path.dirname(FFMPEG_PATH);
+    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${toolDir}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "bestaudio/best" --extract-audio --audio-format mp3 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioPath}" "${url}"`;
     
     exec(command, { env }, (error, stdout, stderr) => {
       if (fs.existsSync(cookiesPath)) {
