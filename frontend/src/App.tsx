@@ -27,7 +27,9 @@ function App() {
       setTranscript(response.data.text);
       setStep('');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to transcribe video. Please ensure the URL is valid and the video is under 90s.');
+      const errorMsg = err.response?.data?.error || (err.request ? 'Network Error: Cannot connect to backend.' : 'An unexpected error occurred.');
+      setError(`${errorMsg} Please ensure the URL is valid and the video is under 5 minutes.`);
+      console.error('API Error:', err);
     } finally {
       setLoading(false);
     }
@@ -127,7 +129,7 @@ function App() {
         </div>
       </div>
       
-      <p className="footer">Max video length: 90 seconds • Uses Whisper API</p>
+      <p className="footer">Max video length: 5 minutes • Uses Whisper API</p>
     </div>
   );
 }
