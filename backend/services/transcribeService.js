@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const YT_DLP_PATH = process.env.YT_DLP_PATH || path.join(__dirname, '../yt-dlp');
 const FFMPEG_PATH = process.env.FFMPEG_PATH || path.join(__dirname, '../ffmpeg');
+const FFPROBE_PATH = path.join(path.dirname(FFMPEG_PATH), 'ffprobe');
 
 console.log('--- Startup Config ---');
 console.log('__dirname:', __dirname);
