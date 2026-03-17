@@ -21,3 +21,5 @@ rm -rf ffmpeg-*-amd64-static
 rm ffmpeg.tar.xz
 
 echo "Build dependencies installed successfully!"
+echo "Verifying local files:"
+ls -la ./yt-dlp ./ffmpeg ./ffprobe

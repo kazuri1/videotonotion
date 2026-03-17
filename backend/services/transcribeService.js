@@ -8,6 +8,14 @@ require('dotenv').config();
 const YT_DLP_PATH = process.env.YT_DLP_PATH || path.join(__dirname, '../yt-dlp');
 const FFMPEG_PATH = process.env.FFMPEG_PATH || path.join(__dirname, '../ffmpeg');
 
+console.log('--- Startup Config ---');
+console.log('__dirname:', __dirname);
+console.log('YT_DLP_PATH:', YT_DLP_PATH);
+console.log('FFMPEG_PATH:', FFMPEG_PATH);
+console.log('YT_DLP_EXISTS:', fs.existsSync(YT_DLP_PATH));
+console.log('FFMPEG_EXISTS:', fs.existsSync(FFMPEG_PATH));
+console.log('----------------------');
+
 ffmpeg.setFfmpegPath(FFMPEG_PATH);
 
 const groq = new Groq({
