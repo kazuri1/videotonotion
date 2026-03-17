@@ -44,8 +44,16 @@ async function transcribeVideo(url) {
     // Handle cookies if provided in ENV
     let cookieArg = '';
     if (process.env.COOKIES_TEXT) {
-      fs.writeFileSync(cookiesPath, process.env.COOKIES_TEXT);
-      cookieArg = `--cookies "${cookiesPath}"`;
+      console.log('COOKIES_TEXT detected. Writing to:', cookiesPath);
+      try {
+        fs.writeFileSync(cookiesPath, process.env.COOKIES_TEXT);
+        console.log('Cookies file written successfully. Size:', fs.statSync(cookiesPath).size);
+        cookieArg = `--cookies "${cookiesPath}"`;
+      } catch (err) {
+        console.error('Error writing cookies file:', err);
+      }
+    } else {
+      console.log('No COOKIES_TEXT found in environment variables.');
     }
 
     // Use output template to let yt-dlp decide extension
