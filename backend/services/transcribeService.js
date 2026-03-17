@@ -31,8 +31,8 @@ async function transcribeVideo(url) {
   const videoTemplate = path.join(videoDir, `${videoBaseName}.%(ext)s`);
   const audioPath = path.join(videoDir, 'temp_audio.mp3');
 
-  // 1. Download video using yt-dlp
-  console.log('Downloading video...');
+  // 1. Download audio directly using yt-dlp
+  console.log('Downloading and extracting audio...');
   const ffmpegDir = path.dirname(FFMPEG_PATH);
   const cookiesPath = path.join(videoDir, 'cookies.txt');
   
@@ -53,21 +53,20 @@ async function transcribeVideo(url) {
       } catch (err) {
         console.error('Error writing cookies file:', err);
       }
-    } else {
-      console.log('No COOKIES_TEXT found in environment variables.');
     }
 
-    // Use output template to let yt-dlp decide extension
-    // We increase duration filter to 300s
-    exec(`"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${FFMPEG_PATH}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${videoTemplate}" "${url}"`, { env }, (error, stdout, stderr) => {
-      // Cleanup cookies file immediately after execution
+    // We use --extract-audio and --audio-format mp3 to get an mp3 directly
+    // This is MUCH faster and more reliable as it skips the video download
+    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${FFMPEG_PATH}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "https://www.instagram.com/" -f "bestaudio/best" --extract-audio --audio-format mp3 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioPath}" "${url}"`;
+    
+    exec(command, { env }, (error, stdout, stderr) => {
       if (fs.existsSync(cookiesPath)) {
         try { fs.unlinkSync(cookiesPath); } catch(e) {}
       }
 
       if (error) {
-        console.error('yt-dlp error:', error);
-        return reject(new Error(`yt-dlp failed: ${stderr || error.message}`));
+        console.error('yt-dlp/ffmpeg error:', error);
+        return reject(new Error(`Extraction failed: ${stderr || error.message}`));
       }
       
       if (stdout.includes('does not pass filter')) {
@@ -78,46 +77,18 @@ async function transcribeVideo(url) {
     });
   });
 
-  // 2. Find the actual downloaded file (since extension might vary)
-  console.log('Finding downloaded video file...');
-  const files = fs.readdirSync(videoDir);
-  const videoFileName = files.find(f => f.startsWith(videoBaseName) && !f.endsWith('.mp3'));
-  
-  if (!videoFileName) {
-    console.error('Files in directory:', files);
-    throw new Error(`Video download failed: No file starting with ${videoBaseName} found in ${videoDir}. Checked files: ${files.join(', ')}`);
+  // 2. Verify we have the audio file
+  if (!fs.existsSync(audioPath)) {
+    throw new Error('Audio extraction failed: temp_audio.mp3 not found.');
   }
   
-  const videoPath = path.join(videoDir, videoFileName);
-  const stats = fs.statSync(videoPath);
-  console.log('Found video file at:', videoPath);
-  console.log('Video file size:', stats.size, 'bytes');
+  const stats = fs.statSync(audioPath);
+  console.log('Audio file ready at:', audioPath);
+  console.log('Audio file size:', stats.size, 'bytes');
 
   if (stats.size === 0) {
-    throw new Error(`Video download failed: Found file ${videoFileName} but it is 0 bytes. Check cookies or URL.`);
+    throw new Error('Audio extraction failed: file is 0 bytes.');
   }
-
-  // 3. Extract audio using ffmpeg
-  console.log('Extracting audio...');
-  
-  // First, let's inspect with ffprobe
-  await new Promise((resolve) => {
-    exec(`"${FFPROBE_PATH}" -v error -show_entries stream=codec_type -of default=noprint_wrappers=1 "${videoPath}"`, (error, stdout) => {
-      console.log('Media streams found:', stdout || 'none');
-      resolve();
-    });
-  });
-
-  await new Promise((resolve, reject) => {
-    // Using exec instead of fluent-ffmpeg for more control and better error output
-    exec(`"${FFMPEG_PATH}" -y -i "${videoPath}" -vn -acodec libmp3lame -q:a 2 "${audioPath}"`, (error, stdout, stderr) => {
-      if (error) {
-        console.error('ffmpeg stderr:', stderr);
-        return reject(new Error(`ffmpeg failed: ${stderr || error.message}`));
-      }
-      resolve();
-    });
-  });
 
   // 4. Transcribe using Groq Whisper
   console.log('Transcribing with Groq...');
