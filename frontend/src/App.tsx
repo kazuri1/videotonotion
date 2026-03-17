@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Download, FileAudio, Type, Copy, Save, Check, Loader2, AlertCircle } from 'lucide-react';
 import './App.css';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
   const [url, setUrl] = useState('');

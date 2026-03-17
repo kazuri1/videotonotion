@@ -5,8 +5,8 @@ const Groq = require('groq-sdk');
 const ffmpeg = require('fluent-ffmpeg');
 require('dotenv').config();
 
-const YT_DLP_PATH = 'C:\\Users\\Kazuri\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe\\yt-dlp.exe';
-const FFMPEG_PATH = 'C:\\Users\\Kazuri\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.WinGet.Source_8wekyb3d8bbwe\\ffmpeg-8.1-full_build\\bin\\ffmpeg.exe';
+const YT_DLP_PATH = process.env.YT_DLP_PATH || 'yt-dlp';
+const FFMPEG_PATH = process.env.FFMPEG_PATH || 'ffmpeg';
 
 ffmpeg.setFfmpegPath(FFMPEG_PATH);
 
