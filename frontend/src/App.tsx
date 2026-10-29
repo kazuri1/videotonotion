@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Copy, Save, Check, Loader2, AlertCircle, FileText } from 'lucide-react';
+import { Copy, Save, Check, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -67,11 +67,9 @@ function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between px-6 py-5 sm:px-10">
-        <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-          <span className="grid size-7 place-items-center rounded-sm bg-primary text-primary-foreground">
-            <FileText className="size-4" />
-          </span>
-          Reelnote
+        <span className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
+          <img src="/favicon.svg" alt="" className="size-8" />
+          VideoToNotion
         </span>
         <span className="text-sm text-muted-foreground">Videos up to 5 minutes, transcribed with Whisper</span>
       </header>
