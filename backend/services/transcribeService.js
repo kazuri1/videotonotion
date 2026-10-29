@@ -30,7 +30,12 @@ async function transcribeVideo(url) {
   const videoBaseName = 'temp_video';
   const videoDir = path.join(__dirname, '../../');
   const videoTemplate = path.join(videoDir, `${videoBaseName}.%(ext)s`);
-  const audioPath = path.join(videoDir, 'temp_audio.mp3');
+  const audioTemplate = path.join(videoDir, 'temp_audio.%(ext)s');
+  let audioPath = path.join(videoDir, 'temp_audio.mp3');
+  // Remove leftovers from previous runs
+  try {
+    fs.readdirSync(videoDir).filter(f => f.startsWith('temp_audio.')).forEach(f => fs.unlinkSync(path.join(videoDir, f)));
+  } catch (e) {}
 
   // 1. Download audio directly using yt-dlp
   console.log('Downloading and extracting audio...');
@@ -62,7 +67,7 @@ async function transcribeVideo(url) {
     const referer = url.includes('instagram.com') ? 'https://www.instagram.com/' : 'https://www.youtube.com/';
     const format = 'bestaudio/best';
     
-    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${toolDir}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "${referer}" -f "${format}" --extract-audio --audio-format mp3 --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioPath}" "${url}"`;
+    const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${toolDir}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "${referer}" -f "${format}" --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioTemplate}" "${url}"`;
     
     exec(command, { env }, (error, stdout, stderr) => {
       if (fs.existsSync(cookiesPath)) {
@@ -82,10 +87,12 @@ async function transcribeVideo(url) {
     });
   });
 
-  // 2. Verify we have the audio file
-  if (!fs.existsSync(audioPath)) {
-    throw new Error('Audio extraction failed: temp_audio.mp3 not found.');
+  // 2. Locate the downloaded file (extension varies)
+  const found = fs.readdirSync(videoDir).find(f => f.startsWith('temp_audio.'));
+  if (!found) {
+    throw new Error('Audio extraction failed: downloaded file not found (video may exceed duration limit).');
   }
+  audioPath = path.join(videoDir, found);
   
   const stats = fs.statSync(audioPath);
   console.log('Audio file ready at:', audioPath);
