@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Copy, Save, Check, Loader2, AlertCircle } from 'lucide-react';
-import './App.css';
+import { Copy, Save, Check, Loader2, AlertCircle, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -58,78 +62,97 @@ function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const working = loading && !!step;
+
   return (
-    <div className="container">
-      <div className="card">
-        <h1 className="title">Video Transcriber</h1>
-        <p className="subtitle">Convert Reel or video URLs to Notion-ready scripts.</p>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="flex items-center justify-between px-6 py-5 sm:px-10">
+        <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <span className="grid size-7 place-items-center rounded-sm bg-primary text-primary-foreground">
+            <FileText className="size-4" />
+          </span>
+          Reelnote
+        </span>
+        <span className="text-sm text-muted-foreground">Videos up to 5 minutes, transcribed with Whisper</span>
+      </header>
 
-        <div className="form-group">
-          <input
-            type="text"
-            placeholder="Paste video URL (Instagram Reel, YouTube, etc.)"
-            className="input-field"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            disabled={loading}
-          />
+      <main className="grid gap-6 px-6 pb-10 sm:px-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
+        <section className="flex flex-col gap-6 lg:pt-10">
+          <h1 className="text-5xl font-semibold leading-[0.95] tracking-[-0.04em] sm:text-7xl">
+            Reel in,<br />Notion page out.
+          </h1>
+          <p className="max-w-md text-lg leading-relaxed">
+            Paste the link to an Instagram Reel or YouTube video. You get the spoken script back, ready to edit and save to Notion.
+          </p>
 
-          <button
-            onClick={handleTranscribe}
-            disabled={loading || !url}
-            className={`btn-primary ${loading ? 'btn-loading' : ''}`}
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(e) => { e.preventDefault(); handleTranscribe(); }}
           >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin" />
-                <span>{step || 'Processing...'}</span>
-              </>
-            ) : (
-              'Get Script'
-            )}
-          </button>
+            <label htmlFor="video-url" className="text-sm font-medium">Video link</label>
+            <Input
+              id="video-url"
+              type="url"
+              placeholder="https://www.instagram.com/reel/..."
+              className="h-12 bg-card text-base"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              disabled={loading}
+            />
+            <Button type="submit" size="lg" className="h-12 text-base" disabled={loading || !url}>
+              {working ? <><Loader2 className="animate-spin" />{step}</> : 'Get the script'}
+            </Button>
+          </form>
 
           {error && (
-            <div className="error-box">
-              <AlertCircle size={20} />
-              <p>{error}</p>
-            </div>
+            <Alert variant="destructive" className="bg-card">
+              <AlertCircle />
+              <AlertTitle>That did not work</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
+        </section>
 
-          {transcript && (
-            <div className="transcript-area animate-fade-in">
-              <div className="textarea-wrapper">
-                <textarea
-                  className="textarea"
-                  value={transcript}
-                  onChange={(e) => setTranscript(e.target.value)}
-                  placeholder="Transcript will appear here..."
-                />
-              </div>
-
-              <div className="action-buttons">
-                <button
-                  onClick={handleCopy}
-                  className="btn-secondary"
-                >
-                  {copied ? <Check size={20} className="text-success" /> : <Copy size={20} />}
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
-                <button
-                  onClick={handleSaveToNotion}
-                  disabled={loading || saved}
-                  className={`btn-purple ${saved ? 'btn-success' : ''}`}
-                >
-                  {saved ? <Check size={20} /> : <Save size={20} />}
+        <section aria-label="Transcript" className="flex min-h-[28rem] flex-col rounded-md bg-card p-6 sm:p-8">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-2xl font-semibold tracking-tight">Script</h2>
+            {transcript && (
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={handleCopy}>
+                  {copied ? <Check /> : <Copy />}
+                  {copied ? 'Copied' : 'Copy'}
+                </Button>
+                <Button onClick={handleSaveToNotion} disabled={loading || saved}>
+                  {loading && step.startsWith('Saving') ? <Loader2 className="animate-spin" /> : saved ? <Check /> : <Save />}
                   {saved ? 'Saved to Notion' : 'Save to Notion'}
-                </button>
+                </Button>
               </div>
+            )}
+          </div>
+
+          {transcript ? (
+            <Textarea
+              aria-label="Transcript text"
+              className="mt-6 min-h-80 flex-1 resize-none border-0 bg-background text-base leading-relaxed"
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+            />
+          ) : loading ? (
+            <div className="mt-6 flex flex-1 flex-col gap-3" aria-busy="true">
+              <p className="text-base">{step || 'Working...'}</p>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-11/12" />
+              <Skeleton className="h-4 w-4/5" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
             </div>
+          ) : (
+            <p className="mt-6 max-w-sm text-base leading-relaxed text-muted-foreground">
+              No script yet. Paste a video link and the transcript will appear here, editable before you save it.
+            </p>
           )}
-        </div>
-      </div>
-      
-      <p className="footer">Max video length: 5 minutes • Uses Whisper API</p>
+        </section>
+      </main>
     </div>
   );
 }

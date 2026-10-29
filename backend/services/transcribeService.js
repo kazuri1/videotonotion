@@ -50,6 +50,9 @@ async function transcribeVideo(url) {
 
     // Handle cookies if provided in ENV
     let cookieArg = '';
+    if (process.env.COOKIES_FILE && fs.existsSync(process.env.COOKIES_FILE)) {
+      cookieArg = `--cookies "${process.env.COOKIES_FILE}"`;
+    }
     if (process.env.COOKIES_TEXT) {
       console.log('COOKIES_TEXT detected. Writing to:', cookiesPath);
       try {
