@@ -65,7 +65,7 @@ async function transcribeVideo(url) {
     // Pointing --ffmpeg-location to the ABSOLUTE directory so it finds both ffmpeg and ffprobe
     const toolDir = path.resolve(path.dirname(FFMPEG_PATH));
     const referer = url.includes('instagram.com') ? 'https://www.instagram.com/' : 'https://www.youtube.com/';
-    const format = 'bestaudio/best';
+    const format = 'bestaudio[acodec!=none]/best[acodec!=none]/bestaudio/best';
     
     const command = `"${YT_DLP_PATH}" ${cookieArg} --ffmpeg-location "${toolDir}" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" --referer "${referer}" -f "${format}" --match-filter "duration <= ${MAX_DURATION}" --no-playlist --no-warnings -o "${audioTemplate}" "${url}"`;
     
